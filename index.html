@@ -34,7 +34,7 @@ a:hover{text-decoration:underline}
 <body>
 <main>
 <header>
-<div><h1>Top Articles</h1><p class="description">热门互联网文章 · 评分 = (阅读×1 + 点赞×100 + 转发×1000) / 10000</p></div>
+<div><h1>Top Articles</h1><p class="description">热门互联网文章（无新闻等文章内容）</p></div>
 <p id="status">加载中…</p>
 </header>
 <div class="table-wrap"><table>
@@ -56,7 +56,14 @@ const COLS = [
   { key: "publishTime", label: "发布时间", sort: true },
   { key: "statTime", label: "统计时间" },
 ];
-const score = (a) => Math.round(((a.reads || 0) + (a.likes || 0) * 100 + (a.shares || 0) * 1000) / 100) / 100;
+const score = (a) => {
+  const timeDiff = ((Date.now() - (Date.parse(a.publishTime) || 0))/ (1000 * 60 * 60 * 24)) / 3000;
+  const res = Math.round(((a.reads || 0) + (a.likes || 0) * 3 + (a.shares || 0) * 5) * 100) / 500 - timeDiff;
+  if (res < 0.1) {
+    return 0.1;
+  }
+  return res;
+};
 let rows = [], sortKey = "score", dir = -1;
 const head = document.getElementById("head"), body = document.getElementById("body"), status = document.getElementById("status");
 
