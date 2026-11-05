@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Top Articles</title>
+<style>
+:root{--text:rgba(0,0,0,.88);--strong:#000;--muted:rgba(0,0,0,.55);--faint:rgba(0,0,0,.35);--line:rgba(0,0,0,.12);--soft:rgba(0,0,0,.07)}
+*{box-sizing:border-box}
+body{min-width:320px;margin:0;background:#fff;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+main{width:min(100%,1440px);margin:0 auto;padding:72px 48px 56px}
+header{display:flex;align-items:end;justify-content:space-between;gap:32px;margin-bottom:48px}
+h1{margin:0;color:var(--strong);font-size:32px;font-weight:650;letter-spacing:-.03em}
+.description,#status{margin:12px 0 0;color:var(--muted);font-size:14px}
+#status{margin:0;white-space:nowrap}
+.table-wrap{overflow-x:auto}
+table{width:100%;min-width:1000px;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:18px 14px;text-align:left;vertical-align:middle;white-space:nowrap}
+th:first-child,td:first-child{padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+th{border-bottom:1px solid var(--line);color:var(--faint);font-size:11px;font-weight:700;letter-spacing:.055em}
+td{border-bottom:1px solid var(--soft)}
+td.title{white-space:normal;min-width:260px}
+.sort-button{display:inline-flex;align-items:center;gap:7px;padding:0;border:0;background:transparent;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer}
+.sort-button::after{content:"↕";font-size:13px}
+.sort-button[aria-sort=ascending]::after{color:var(--strong);content:"↑"}
+.sort-button[aria-sort=descending]::after{color:var(--strong);content:"↓"}
+a{color:var(--strong);text-decoration:none}
+a:hover{text-decoration:underline}
+.score{font-weight:650;color:var(--strong)}
+@media(max-width:700px){main{padding:40px 20px}header{flex-direction:column;align-items:start}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>Top Articles</h1><p class="description">热门互联网文章 · 评分 = (阅读×1 + 点赞×100 + 转发×1000) / 10000</p></div>
+<p id="status">加载中…</p>
+</header>
+<div class="table-wrap"><table>
+<thead><tr id="head"></tr></thead>
+<tbody id="body"></tbody>
+</table></div>
+</main>
+<script>
+const CHANNELS = { wechat: "微信公众号" };
+const COLS = [
+  { key: "score", label: "评分", sort: true },
+  { key: "title", label: "标题" },
+  { key: "channel", label: "渠道" },
+  { key: "category", label: "分类" },
+  { key: "author", label: "作者" },
+  { key: "reads", label: "阅读", sort: true },
+  { key: "likes", label: "点赞", sort: true },
+  { key: "shares", label: "转发", sort: true },
+  { key: "publishTime", label: "发布时间", sort: true },
+  { key: "statTime", label: "统计时间" },
+];
+const score = (a) => Math.round(((a.reads || 0) + (a.likes || 0) * 100 + (a.shares || 0) * 1000) / 100) / 100;
+let rows = [], sortKey = "score", dir = -1;
+const head = document.getElementById("head"), body = document.getElementById("body"), status = document.getElementById("status");
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+function safeUrl(u) { return /^https?:\/\//i.test(u || "") ? u : ""; }
+
+function renderHead() {
+  head.innerHTML = "";
+  for (const c of COLS) {
+    const th = document.createElement("th");
+    if (c.sort) {
+      const b = document.createElement("button");
+      b.className = "sort-button";
+      b.textContent = c.label;
+      b.setAttribute("aria-sort", sortKey === c.key ? (dir > 0 ? "ascending" : "descending") : "none");
+      b.onclick = () => { if (sortKey === c.key) dir = -dir; else { sortKey = c.key; dir = -1; } render(); };
+      th.appendChild(b);
+    } else th.textContent = c.label;
+    head.appendChild(th);
+  }
+  const th = document.createElement("th"); th.textContent = "链接"; head.appendChild(th);
+}
+
+function render() {
+  const val = (r) => sortKey === "publishTime" ? Date.parse(r.publishTime) || 0 : r[sortKey] || 0;
+  rows.sort((a, b) => (val(a) - val(b)) * dir);
+  renderHead();
+  body.innerHTML = rows.map((r) => {
+    const url = safeUrl(r.url);
+    return `<tr><td class="score">${r.score.toFixed(2)}</td><td class="title">${esc(r.title)}</td>` +
+      `<td>${esc(CHANNELS[r.channel] || r.channel)}</td><td>${esc(r.category)}</td><td>${esc(r.author)}</td>` +
+      `<td>${esc(r.reads)}</td><td>${esc(r.likes)}</td><td>${esc(r.shares)}</td>` +
+      `<td>${esc(r.publishTime)}</td><td>${esc(r.statTime)}</td>` +
+      `<td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">查看</a>` : ""}</td></tr>`;
+  }).join("");
+  status.textContent = `${rows.length} 篇文章`;
+}
+
+fetch("data.json").then((r) => r.json()).then((d) => {
+  rows = d.map((a) => ({ ...a, score: score(a) }));
+  render();
+}).catch(() => { status.textContent = "加载失败"; });
+</script>
+</body>
+</html>
