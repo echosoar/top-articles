@@ -1,0 +1,14 @@
+[
+  {
+    "channel": "wechat",
+    "publishTime": "2024-01-01",
+    "title": "示例文章",
+    "category": "技术",
+    "reads": 100000,
+    "likes": 1000,
+    "shares": 100,
+    "author": "示例作者",
+    "statTime": "2024-02-01",
+    "url": "https://mp.weixin.qq.com/"
+  }
+]
