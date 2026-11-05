@@ -28,6 +28,11 @@ td.title{white-space:normal;min-width:260px}
 a{color:var(--strong);text-decoration:none}
 a:hover{text-decoration:underline}
 .score{font-weight:650;color:var(--strong)}
+.origin-title{margin-top:4px;color:var(--faint);font-size:12px}
+#filters{display:flex;flex-wrap:wrap;gap:8px;margin:-16px 0 32px}
+.chip{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{border-color:var(--strong);background:var(--strong);color:#fff}
+.chip span{margin-left:6px;opacity:.6}
 @media(max-width:700px){main{padding:40px 20px}header{flex-direction:column;align-items:start}}
 </style>
 </head>
@@ -37,6 +42,7 @@ a:hover{text-decoration:underline}
 <div><h1>Top Articles</h1><p class="description">热门互联网文章（无新闻等文章内容）</p></div>
 <p id="status">加载中…</p>
 </header>
+<div id="filters"></div>
 <div class="table-wrap"><table>
 <thead><tr id="head"></tr></thead>
 <tbody id="body"></tbody>
@@ -56,15 +62,35 @@ const COLS = [
   { key: "publishTime", label: "发布时间", sort: true },
   { key: "statTime", label: "统计时间" },
 ];
-const score = (a) => {
-  const timeDiff = ((Date.now() - (Date.parse(a.publishTime) || 0))/ (1000 * 60 * 60 * 24)) / 3000;
+const defaultScore = (a) => {
+  const timeDiff = calcTimeDiff(a.publishTime);
   const res = Math.round(((a.reads || 0) + (a.likes || 0) * 3 + (a.shares || 0) * 5) * 100) / 500 - timeDiff;
   if (res < 0.1) {
     return 0.1;
   }
   return res;
 };
+
+const calcTimeDiff = (publishTime) => ((Date.now() - (Date.parse(publishTime) || 0))/ (1000 * 60 * 60 * 24)) / 3000;
+
+const xScore = (a) => {
+  const timeDiff = calcTimeDiff(a.publishTime);
+  const read = a.reads > 5000 ? 5000 : a.reads; 
+  const res = Math.round((Math.sqrt(read) / 2 + (a.likes || 0)   + (a.shares || 0) * 5) * 100) / 500 - timeDiff;
+  if (res < 0.1) {
+    return 0.1;
+  }
+  return res;
+};
+// 按平台（channel）自定义评分逻辑，未配置的平台使用 defaultScore
+const scoreByPlatform = {
+  X: (a) => xScore(a),
+  // 公众号: (a) => defaultScore(a),
+};
+const score = (a) => (scoreByPlatform[a.channel] || defaultScore)(a);
 let rows = [], sortKey = "score", dir = -1;
+const selected = new Set();
+const filters = document.getElementById("filters");
 const head = document.getElementById("head"), body = document.getElementById("body"), status = document.getElementById("status");
 
 function esc(s) {
@@ -89,23 +115,40 @@ function renderHead() {
   const th = document.createElement("th"); th.textContent = "链接"; head.appendChild(th);
 }
 
+function renderFilters() {
+  const counts = new Map();
+  for (const r of rows) counts.set(r.channel, (counts.get(r.channel) || 0) + 1);
+  filters.innerHTML = "";
+  for (const [ch, n] of counts) {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.setAttribute("aria-pressed", selected.has(ch));
+    b.append(CHANNELS[ch] || ch || "未知");
+    const s = document.createElement("span"); s.textContent = n; b.appendChild(s);
+    b.onclick = () => { selected.has(ch) ? selected.delete(ch) : selected.add(ch); renderFilters(); render(); };
+    filters.appendChild(b);
+  }
+}
+
 function render() {
   const val = (r) => sortKey === "publishTime" ? Date.parse(r.publishTime) || 0 : r[sortKey] || 0;
   rows.sort((a, b) => (val(a) - val(b)) * dir);
   renderHead();
-  body.innerHTML = rows.map((r) => {
+  const shown = selected.size ? rows.filter((r) => selected.has(r.channel)) : rows;
+  body.innerHTML = shown.map((r) => {
     const url = safeUrl(r.url);
-    return `<tr><td class="score">${r.score.toFixed(2)}</td><td class="title">${esc(r.title)}</td>` +
+    return `<tr><td class="score">${r.score.toFixed(2)}</td><td class="title">${esc(r.title)}${r.originTitle ? `<div class="origin-title">${esc(r.originTitle)}</div>` : ""}</td>` +
       `<td>${esc(CHANNELS[r.channel] || r.channel)}</td><td>${esc(r.category)}</td><td>${esc(r.author)}</td>` +
       `<td>${esc(r.reads)}</td><td>${esc(r.likes)}</td><td>${esc(r.shares)}</td>` +
       `<td>${esc(r.publishTime)}</td><td>${esc(r.statTime)}</td>` +
       `<td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">查看</a>` : ""}</td></tr>`;
   }).join("");
-  status.textContent = `${rows.length} 篇文章`;
+  status.textContent = `${shown.length} 篇文章`;
 }
 
 fetch("data.json").then((r) => r.json()).then((d) => {
   rows = d.map((a) => ({ ...a, score: score(a) }));
+  renderFilters();
   render();
 }).catch(() => { status.textContent = "加载失败"; });
 </script>

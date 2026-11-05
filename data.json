@@ -1,4 +1,5 @@
 [
+  
   {
     "channel": "公众号",
     "publishTime": "2026/09/14",
@@ -10,6 +11,19 @@
     "author": "intlsy 的狗窝",
     "statTime": "2026/10/01",
     "url": "https://mp.weixin.qq.com/s/zk0KxuLzhmMJ4LPYW_OHMA"
+  },
+  {
+    "channel": "X",
+    "publishTime": "2026/07/27",
+    "title": "22580：从 GPT-2 到 Kimi3，深度解析",
+    "originTitle": "22580: From GPT2 to Kimi3, Explained",
+    "category": "其他",
+    "reads": 656.7,
+    "likes": 1.4,
+    "shares": 0.29,
+    "author": "@waterloo_intern",
+    "statTime": "2026/10/01",
+    "url": "https://x.com/waterloo_intern/status/2081762065392541951"
   },
   {
     "channel": "公众号",
@@ -34,6 +48,19 @@
     "author": "DeepSeek",
     "statTime": "2026/10/01",
     "url": "https://mp.weixin.qq.com/s/8bxXqS2R8Fx5-1TLDBiEDg"
+  },
+  {
+    "channel": "X",
+    "publishTime": "2026/01/13",
+    "title": "如何在一天内彻底改善你的人生",
+    "originTitle": "How to fix your entire life in 1 day",
+    "category": "其他",
+    "reads": 25000,
+    "likes": 38,
+    "shares": 7.9,
+    "author": "@thedankoe",
+    "statTime": "2026/10/01",
+    "url": "https://x.com/thedankoe/status/2010751592346030461"
   },
   {
     "channel": "公众号",
