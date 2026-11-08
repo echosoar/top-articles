@@ -41,7 +41,7 @@ a.chip:hover{text-decoration:none;border-color:var(--strong);color:var(--strong)
 <body>
 <main>
 <header>
-<div><h1>Top Articles</h1><p class="description">热门互联网文章（无新闻、宣传、公告等类型文章）</p></div>
+<div><h1>Top Articles</h1><p class="description">热门互联网 10w+ 文章（无新闻、宣传、公告等类型）</p></div>
 <div class="side"><a class="chip" href="https://github.com/echosoar/top-articles/issues/new" target="_blank" rel="noopener noreferrer">提交文章</a><p id="status">加载中…</p></div>
 </header>
 <div id="filters"></div>
@@ -61,11 +61,10 @@ const COLS = [
   { key: "channel", label: "渠道" },
   { key: "category", label: "分类" },
   { key: "author", label: "作者" },
-  { key: "reads", label: "阅读", sort: true },
-  { key: "likes", label: "点赞", sort: true },
-  { key: "shares", label: "转发", sort: true },
+  { key: "reads", label: "阅读(万)", sort: true },
+  { key: "likes", label: "点赞(万)", sort: true },
+  { key: "shares", label: "转发(万)", sort: true },
   { key: "publishTime", label: "发布时间", sort: true },
-  { key: "statTime", label: "统计时间" },
 ];
 const defaultScore = (a) => {
   const timeDiff = calcTimeDiff(a.publishTime);
@@ -153,7 +152,7 @@ function render() {
     return `<tr><td class="score">${r.score.toFixed(2)}</td><td class="title">${esc(r.title)}${r.originTitle ? `<div class="origin-title">${esc(r.originTitle)}</div>` : ""}</td>` +
       `<td>${esc(CHANNELS[r.channel] || r.channel)}</td><td>${esc(r.category)}</td><td>${esc(r.author)}</td>` +
       `<td>${esc(r.reads)}</td><td>${esc(r.likes)}</td><td>${esc(r.shares)}</td>` +
-      `<td>${esc(r.publishTime)}</td><td>${esc(r.statTime)}</td>` +
+      `<td>${esc(r.publishTime)}</td>` +
       `<td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">查看</a>` : ""}</td></tr>`;
   }).join("");
   status.textContent = `${shown.length} 篇文章`;
