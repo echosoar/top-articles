@@ -33,20 +33,25 @@ a:hover{text-decoration:underline}
 .chip{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
 .chip[aria-pressed=true]{border-color:var(--strong);background:var(--strong);color:#fff}
 .chip span{margin-left:6px;opacity:.6}
-@media(max-width:700px){main{padding:40px 20px}header{flex-direction:column;align-items:start}}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+a.chip:hover{text-decoration:none;border-color:var(--strong);color:var(--strong)}
+@media(max-width:700px){main{padding:40px 20px}header{flex-direction:column;align-items:start}.side{align-items:flex-start}}
 </style>
 </head>
 <body>
 <main>
 <header>
-<div><h1>Top Articles</h1><p class="description">热门互联网文章（无新闻、公告等类型文章）</p></div>
-<p id="status">加载中…</p>
+<div><h1>Top Articles</h1><p class="description">热门互联网文章（无新闻、宣传、公告等类型文章）</p></div>
+<div class="side"><a class="chip" href="https://github.com/echosoar/top-articles/issues/new" target="_blank" rel="noopener noreferrer">提交文章</a><p id="status">加载中…</p></div>
 </header>
 <div id="filters"></div>
 <div class="table-wrap"><table>
 <thead><tr id="head"></tr></thead>
 <tbody id="body"></tbody>
 </table></div>
+<div style="display: flex; align-items: center; gap: 8px;font-size: 12px;">
+  <a style="color: rgb(83, 125, 249)" href="https://aiznb.com">AIZNB</a> <span style="opacity: .5;">|</span> <img style="height: 16px;width: auto;margin: 12px 0;" src="https://not.aiznb.com/img?style=today&amp;url=https://aiznb.com/top-articles/">
+</div>
 </main>
 <script>
 const CHANNELS = { wechat: "微信公众号" };
