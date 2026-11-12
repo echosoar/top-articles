@@ -47,6 +47,8 @@ a.chip:hover{text-decoration:none;border-color:var(--strong);color:var(--strong)
 .rank-table th,.rank-table td{padding:10px 8px;white-space:normal}
 .rank-table th:first-child,.rank-table td:first-child{padding-left:0;width:36px;color:var(--faint)}
 .rank-table th:last-child,.rank-table td:last-child{text-align:right;padding-right:0}
+.month-table th:first-child,.month-table td:first-child{width:auto}
+.month-table td:first-child{color:var(--text)}
 @media(max-width:700px){main{padding:40px 20px}header{flex-direction:column;align-items:start}.side{align-items:flex-start}.rank-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -56,12 +58,14 @@ a.chip:hover{text-decoration:none;border-color:var(--strong);color:var(--strong)
 <div><h1>Top Articles</h1><p class="description">热门互联网 10w+ 文章（无新闻、宣传、公告等类型）</p></div>
 <div class="side"><p id="status">加载中…</p></div>
 </header>
-<div class="modal" id="rank-modal" role="dialog" aria-modal="true" aria-label="排行榜">
+<div class="modal" id="rank-modal" role="dialog" aria-modal="true" aria-label="统计">
 <div class="modal-box">
-<div class="modal-head"><h2>排行榜</h2><button class="modal-close" id="rank-close" type="button" aria-label="关闭">×</button></div>
+<div class="modal-head"><h2>统计</h2><button class="modal-close" id="rank-close" type="button" aria-label="关闭">×</button></div>
 <div class="rank-grid">
 <div><h3>上榜次数</h3><table class="rank-table"><thead><tr><th>#</th><th>作者</th><th>次数</th></tr></thead><tbody id="rank-count"></tbody></table></div>
-<div><h3>点赞总数(万)</h3><table class="rank-table"><thead><tr><th>#</th><th>作者</th><th>点赞(万)</th></tr></thead><tbody id="rank-likes"></tbody></table></div>
+<div><h3>平均点赞量(万)</h3><table class="rank-table"><thead><tr><th>#</th><th>作者</th><th>平均点赞(万)</th></tr></thead><tbody id="rank-likes"></tbody></table></div>
+<div><h3>平均转发量(万)</h3><table class="rank-table"><thead><tr><th>#</th><th>作者</th><th>平均转发(万)</th></tr></thead><tbody id="rank-shares"></tbody></table></div>
+<div><h3>按月文章数量</h3><table class="rank-table month-table"><thead><tr><th>月份</th><th>文章数量</th></tr></thead><tbody id="rank-month"></tbody></table></div>
 </div>
 </div>
 </div>
@@ -182,16 +186,36 @@ function render() {
 const rankModal = document.getElementById("rank-modal");
 function renderRank() {
   const stat = new Map();
+  const monthCounts = new Map();
   for (const r of rows) {
     const name = r.author || "未知";
-    const s = stat.get(name) || { count: 0, likes: 0 };
-    s.count++; s.likes += Number(r.likes) || 0;
+    const s = stat.get(name) || { count: 0, likes: 0, shares: 0 };
+    s.count++; s.likes += Number(r.likes) || 0; s.shares += Number(r.shares) || 0;
     stat.set(name, s);
+    const date = new Date(r.publishTime);
+    if (!Number.isNaN(date.getTime())) {
+      const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      monthCounts.set(month, (monthCounts.get(month) || 0) + 1);
+    }
   }
-  const top = (key) => [...stat].sort((a, b) => b[1][key] - a[1][key]).slice(0, 20);
-  const html = (list, key) => list.map(([n, s], i) => `<tr><td>${i + 1}</td><td>${esc(n)}</td><td>${key === "likes" ? Math.round(s.likes * 100) / 100 : s.count}</td></tr>`).join("");
-  document.getElementById("rank-count").innerHTML = html(top("count"), "count");
-  document.getElementById("rank-likes").innerHTML = html(top("likes"), "likes");
+  const topCount = [...stat].sort((a, b) => b[1].count - a[1].count).slice(0, 20);
+  const topAverage = (key) => [...stat]
+    .filter(([, s]) => s.count >= 3)
+    .map(([name, s]) => [name, s[key] / s.count])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20);
+  const htmlCount = topCount.map(([n, s], i) => `<tr><td>${i + 1}</td><td>${esc(n)}</td><td>${s.count}</td></tr>`).join("");
+  const htmlAverage = (list) => list.map(([name, average], i) => `<tr><td>${i + 1}</td><td>${esc(name)}</td><td>${Math.round(average * 100) / 100}</td></tr>`).join("");
+  const now = new Date();
+  const months = Array.from({ length: 21 }, (_, offset) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    return `<tr><td>${month}</td><td>${monthCounts.get(month) || 0}</td></tr>`;
+  }).join("");
+  document.getElementById("rank-count").innerHTML = htmlCount;
+  document.getElementById("rank-likes").innerHTML = htmlAverage(topAverage("likes"));
+  document.getElementById("rank-shares").innerHTML = htmlAverage(topAverage("shares"));
+  document.getElementById("rank-month").innerHTML = months;
 }
 document.getElementById("rank-btn").onclick = () => { renderRank(); rankModal.classList.add("open"); };
 document.getElementById("rank-close").onclick = () => rankModal.classList.remove("open");
