@@ -8,7 +8,7 @@ const day = 24 * 60 * 60 * 1000;
 class GetWxRank {
     constructor() {
         this.now = Date.now();
-        this.yesterday = this.now - 1 * day;
+        this.yesterday = this.now - 20 * day;
         this.cached = {};
         data.forEach(item => {
             this.cached[`${item.title}:${item.author}`] = 1;
@@ -120,6 +120,18 @@ class GetWxRank {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    isRank1(item) {
+        if (item.author) {
+            if (item.author.includes('新闻') || item.author.includes('校友会')) {
+                return false;
+            }
+        }
+        if (item.title.includes('新闻') || item.title.includes('通告') || item.title.includes('逝世')) {
+            return false;
+        }
+        return item.likeNum + item.shareNum > 20000;
     }
 }
 
